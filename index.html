@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173b46">
+  <meta name="description" content="在平面圖上配置設備，立即產生設備數量清單與報價。">
+  <title>室內裝修設備規劃</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23173b46'/%3E%3Cpath d='M12 17h40v30H12zM12 31h40M31 17v30' fill='none' stroke='%23f5ede0' stroke-width='4'/%3E%3Ccircle cx='44' cy='39' r='5' fill='%23e18c63'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./config.js"></script>
+</head>
+<body>
+  <section id="authScreen" class="entry-screen">
+    <div class="entry-card">
+      <div class="entry-brand"><span class="brand-mark">▦</span> 室內裝修設備規劃</div>
+      <h1>登入雲端專案</h1>
+      <p>使用同一組帳號，即可在電腦、手機與平板查看相同圖面。</p>
+      <div id="configNotice" class="entry-notice" hidden>尚未設定 Supabase。請依 README 填入 dist/config.js 的 Project URL 與 publishable key。</div>
+      <form id="authForm">
+        <label class="field">Email<input id="authEmail" type="email" autocomplete="email" required></label>
+        <label class="field">密碼<input id="authPassword" type="password" autocomplete="current-password" minlength="6" required></label>
+        <button id="authSubmit" class="primary-button full" type="submit">登入</button>
+      </form>
+      <button id="authMode" class="entry-link" type="button">還沒有帳號？建立帳號</button>
+      <p id="authMessage" class="entry-message" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section id="projectScreen" class="entry-screen" hidden>
+    <div class="project-home">
+      <div class="project-home-head"><div><div class="entry-brand"><span class="brand-mark">▦</span> 室內裝修設備規劃</div><h1>我的專案</h1><p id="projectAccount"></p></div><button id="signOutHome" class="outline-button" type="button">登出</button></div>
+      <p id="projectStatus" class="entry-message" role="status" aria-live="polite"></p>
+      <div id="projectCards" class="project-cards"></div>
+      <form id="newProjectForm" class="new-project-form"><label class="field">新專案名稱<input id="newProjectName" type="text" maxlength="120" required placeholder="例如：高雄案場"></label><button class="primary-button" type="submit">建立專案</button></form>
+      <div class="project-home-actions"><button id="importBackupHome" class="outline-button" type="button">匯入備份為新專案</button><button id="importLegacy" class="outline-button" type="button" hidden>匯入此瀏覽器的舊資料</button></div>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">▦</span><span>室內裝修設備規劃</span></div>
+      <div class="top-actions">
+        <span id="saveStatus" class="save-status">準備就緒</span>
+        <button id="resolveConflict" class="text-button" type="button" hidden>載入雲端版本</button>
+        <input id="currentProjectName" class="project-name-input" aria-label="專案名稱" type="text" maxlength="120">
+        <button id="myProjects" class="text-button" type="button">我的專案</button>
+        <span id="accountEmail" class="account-email"></span>
+        <button id="signOut" class="text-button" type="button">登出</button>
+        <button id="exportProject" class="text-button" type="button">備份專案</button>
+        <button id="exportPortable" class="text-button" type="button">下載可攜版</button>
+        <button id="importProject" class="text-button" type="button">匯入備份</button>
+        <button id="printQuote" class="primary-button" type="button">列印報價單</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <section class="sidebar-section pages-section">
+          <div class="section-title"><h2>圖面與工種</h2><button id="addPage" class="icon-button" title="新增圖面" aria-label="新增圖面" type="button">＋</button></div>
+          <p class="hint">每張圖面可指定一種工種</p>
+          <div id="pageList" class="page-list"></div>
+          <button id="uploadPlans" class="outline-button full" type="button">＋ 匯入圖片或 PDF 圖面</button>
+        </section>
+        <section class="sidebar-section devices-section">
+          <div class="section-title"><h2>設備庫</h2><button id="addDevice" class="icon-button" title="新增設備" aria-label="新增設備" type="button">＋</button></div>
+          <p class="hint">拖曳設備到圖面，或點選後在圖面放置</p>
+          <div id="deviceList" class="device-list"></div>
+          <button id="addDeviceBottom" class="outline-button full" type="button">＋ 新增設備</button>
+        </section>
+      </aside>
+
+      <main class="editor">
+        <div class="editor-toolbar">
+          <div class="page-heading"><span class="eyebrow">目前圖面</span><input id="pageName" aria-label="圖面名稱" type="text" maxlength="80"><div class="page-meta"><input id="pageTrade" aria-label="工種" list="tradeSuggestions" maxlength="40" placeholder="工種"><datalist id="tradeSuggestions"><option value="燈具"><option value="水電"><option value="家具"><option value="空調"><option value="智能家居"></datalist><span id="pageDimensions"></span></div></div>
+          <div class="editor-actions"><button id="replacePlan" class="text-button" type="button">更換底圖</button><button id="deletePage" class="text-button danger" type="button">刪除圖面</button></div>
+        </div>
+        <div class="canvas-surround">
+          <div id="stage" class="stage" tabindex="0" aria-label="圖面編輯區">
+            <img id="planImage" class="plan-image" alt="目前圖面">
+            <div id="emptyPlan" class="empty-plan" hidden><strong>這張圖面還沒有底圖</strong><span>匯入 PNG、JPG 或 PDF，也可以先放置設備。</span><button id="emptyUpload" class="primary-button" type="button">上傳圖面</button></div>
+            <div id="markerLayer" class="marker-layer"></div>
+            <div id="selectionBox" class="selection-box" hidden></div>
+          </div>
+        </div>
+        <div class="editor-foot"><span id="stageHint">從設備庫拖曳到圖面；拖曳空白處可框選設備</span><span id="selectionStatus">未選取設備</span></div>
+      </main>
+
+      <aside class="summary-panel">
+        <div class="summary-header"><div><span class="eyebrow">即時統計</span><h2>設備與報價</h2></div><span id="totalCount" class="count-pill">0 件</span></div>
+        <div class="scope-switch" role="group" aria-label="統計範圍"><button class="active" type="button" data-scope="page">目前圖面</button><button type="button" data-scope="all">全部圖面</button></div>
+        <div id="quoteRows" class="quote-rows"></div>
+        <div class="summary-total"><span>設備總計</span><strong id="grandTotal">NT$ 0</strong></div>
+        <p class="quote-note">金額依設備庫單價計算，未含施工、稅金及其他費用。</p>
+        <button id="exportCsv" class="outline-button full" type="button">下載數量與報價 CSV</button>
+      </aside>
+    </div>
+  </div>
+
+  <input id="planFile" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" multiple hidden>
+  <input id="replaceFile" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" hidden>
+  <input id="deviceImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+  <input id="backupFile" type="file" accept="application/json,text/html,.json,.html" hidden>
+
+  <dialog id="deviceDialog" class="device-dialog">
+    <form id="deviceForm" method="dialog">
+      <div class="dialog-head"><h2 id="dialogTitle">新增設備</h2><button id="closeDialog" class="icon-button" type="button" aria-label="關閉">×</button></div>
+      <div class="image-field"><div id="devicePreview" class="device-preview">＋</div><div><button id="chooseDeviceImage" class="outline-button" type="button">選擇設備圖片</button><p class="hint">PNG、JPG、WebP 或 SVG</p></div></div>
+      <label class="field">設備名稱<input id="deviceName" type="text" maxlength="80" required placeholder="例如：崁燈"></label>
+      <label class="field">單價（NT$）<input id="devicePrice" type="number" min="0" step="1" required value="0"></label>
+      <div class="dialog-actions"><button id="deleteDevice" class="text-button danger" type="button" hidden>刪除設備</button><div class="dialog-spacer"></div><button id="cancelDialog" class="text-button" type="button">取消</button><button class="primary-button" type="submit">儲存設備</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <section id="printSheet" class="print-sheet"></section>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
