@@ -1,6 +1,6 @@
 import {isConfigured} from './supabase.js';
 import {signIn,signUp,signOut,restoreSession,currentUser} from './auth.js';
-import {listProjects,loadProject as loadCloudProject,createProject,getLegacyProject} from './dataStore.js';
+import {listProjects,loadProject as loadCloudProject,createProject,deleteProject,getLegacyProject} from './dataStore.js';
 import {ProjectSync} from './sync.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -316,8 +316,22 @@ async function showProjects() {
   try {
     const result=await listProjects(currentUser().id);
     $('#projectStatus').textContent=result.offline?'目前離線；顯示此裝置已快取的專案。':'';
-    $('#projectCards').innerHTML=result.rows.length ? result.rows.map((row)=>`<button class="project-card" type="button" data-project-id="${escapeHtml(row.id)}"><span><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.description || '設備配置專案')}</small></span><small>${new Date(row.updated_at).toLocaleDateString('zh-TW')}</small></button>`).join('') : '<div class="project-empty">尚無專案。請在下方建立或匯入備份。</div>';
+    $('#projectCards').innerHTML=result.rows.length ? result.rows.map((row)=>`<div class="project-card-row"><button class="project-card" type="button" data-project-id="${escapeHtml(row.id)}"><span><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.description || '設備配置專案')}</small></span><small>${new Date(row.updated_at).toLocaleDateString('zh-TW')}</small></button><button class="project-delete" type="button" data-delete-id="${escapeHtml(row.id)}" aria-label="刪除專案：${escapeHtml(row.name)}">刪除</button></div>`).join('') : '<div class="project-empty">尚無專案。請在下方建立或匯入備份。</div>';
     $('#projectCards').querySelectorAll('[data-project-id]').forEach((button)=>button.addEventListener('click',()=>openProject(button.dataset.projectId)));
+    $('#projectCards').querySelectorAll('[data-delete-id]').forEach((button)=>button.addEventListener('click',async()=>{
+      const row=result.rows.find((item)=>item.id===button.dataset.deleteId);
+      if(!row || !confirm(`確定要永久刪除「${row.name}」？\n此專案的圖面、設備及報價資料將無法復原。`))return;
+      button.disabled=true;button.textContent='刪除中…';
+      try {
+        const outcome=await deleteProject(currentUser().id,row.id);
+        await showProjects();
+        if(outcome.warning)$('#projectStatus').textContent=`專案已刪除，但${outcome.warning}。`;
+        else showToast(`已刪除「${row.name}」`);
+      } catch(error) {
+        $('#projectStatus').textContent=`刪除失敗：${error.message}`;
+        button.disabled=false;button.textContent='刪除';
+      }
+    }));
   } catch(error) {$('#projectStatus').textContent=error.message;$('#projectCards').innerHTML='';}
   try {$('#importLegacy').hidden=!validateProject(await getLegacyProject());}
   catch {$('#importLegacy').hidden=true;}

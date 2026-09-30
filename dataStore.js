@@ -153,8 +153,33 @@ export async function saveProject(userId,projectId,project,name,description,revi
   return rows[0];
 }
 
+async function removeProjectAssets(userId,projectId,token) {
+  const folder=`${userId}/${projectId}`;
+  for (;;) {
+    const files=await apiRequest('/storage/v1/object/list/project-assets',{
+      method:'POST',token,body:{prefix:folder,limit:1000,offset:0,sortBy:{column:'name',order:'asc'}}
+    });
+    const paths=files.filter((file)=>file.id && file.name).map((file)=>`${folder}/${file.name}`);
+    if (!paths.length) return;
+    await apiRequest('/storage/v1/object/project-assets',{method:'DELETE',token,body:{prefixes:paths}});
+  }
+}
+
 export async function deleteProject(userId,projectId) {
   const token=await getAccessToken();
-  await apiRequest(`/rest/v1/projects?id=eq.${encodeURIComponent(projectId)}&user_id=eq.${encodeURIComponent(userId)}`,{method:'DELETE',token});
-  await idbDelete(cacheKey(userId,projectId));
+  const rows=await apiRequest(`/rest/v1/projects?id=eq.${encodeURIComponent(projectId)}&user_id=eq.${encodeURIComponent(userId)}&select=id`,{
+    method:'DELETE',token,headers:{Prefer:'return=representation'}
+  });
+  if (!rows?.length) throw new ApiError('找不到此專案或沒有刪除權限',404);
+  const warnings=[];
+  try { await idbDelete(cacheKey(userId,projectId)); }
+  catch { warnings.push('本機快取清理失敗'); }
+  try {
+    const key=listKey(userId);
+    const cached=JSON.parse(localStorage.getItem(key) || '[]');
+    localStorage.setItem(key,JSON.stringify(cached.filter((row)=>row.id!==projectId)));
+  } catch { warnings.push('離線清單更新失敗'); }
+  try { await removeProjectAssets(userId,projectId,token); }
+  catch { warnings.push('雲端附圖清理失敗'); }
+  return {warning:warnings.join('、')};
 }
