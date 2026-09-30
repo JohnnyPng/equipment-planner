@@ -1,4 +1,4 @@
-import {putCachedProject, saveProject} from './dataStore.js';
+import {putCachedProject, saveProject} from './dataStore.js?v=20260930-delete-project';
 
 export class ProjectSync {
   constructor({userId,projectId,getState,revision=0,dirty=false,conflicted=false,onStatus,onConflict,onRevision,save=saveProject,writeCache=putCachedProject}) {

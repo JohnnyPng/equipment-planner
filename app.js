@@ -1,7 +1,7 @@
 import {isConfigured} from './supabase.js';
 import {signIn,signUp,signOut,restoreSession,currentUser} from './auth.js';
-import {listProjects,loadProject as loadCloudProject,createProject,deleteProject,getLegacyProject} from './dataStore.js';
-import {ProjectSync} from './sync.js';
+import {listProjects,loadProject as loadCloudProject,createProject,deleteProject,getLegacyProject} from './dataStore.js?v=20260930-delete-project';
+import {ProjectSync} from './sync.js?v=20260930-delete-project';
 
 const $ = (selector) => document.querySelector(selector);
 const uid = () => crypto.randomUUID();
