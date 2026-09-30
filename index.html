@@ -44,7 +44,6 @@
         <span id="saveStatus" class="save-status">準備就緒</span>
         <button id="resolveConflict" class="text-button" type="button" hidden>載入雲端版本</button>
         <input id="currentProjectName" class="project-name-input" aria-label="專案名稱" type="text" maxlength="120">
-        <button id="myProjects" class="text-button" type="button">我的專案</button>
         <span id="accountEmail" class="account-email"></span>
         <button id="signOut" class="text-button" type="button">登出</button>
         <button id="exportProject" class="text-button" type="button">備份專案</button>
@@ -72,7 +71,7 @@
 
       <main class="editor">
         <div class="editor-toolbar">
-          <div class="page-heading"><span class="eyebrow">目前圖面</span><input id="pageName" aria-label="圖面名稱" type="text" maxlength="80"><div class="page-meta"><input id="pageTrade" aria-label="工種" list="tradeSuggestions" maxlength="40" placeholder="工種"><datalist id="tradeSuggestions"><option value="燈具"><option value="水電"><option value="家具"><option value="空調"><option value="智能家居"></datalist><span id="pageDimensions"></span></div></div>
+          <div class="page-heading"><button id="myProjects" class="project-back" type="button">← 返回專案選擇</button><span class="eyebrow">目前圖面</span><input id="pageName" aria-label="圖面名稱" type="text" maxlength="80"><div class="page-meta"><input id="pageTrade" aria-label="工種" list="tradeSuggestions" maxlength="40" placeholder="工種"><datalist id="tradeSuggestions"><option value="燈具"><option value="水電"><option value="家具"><option value="空調"><option value="智能家居"></datalist><span id="pageDimensions"></span></div></div>
           <div class="editor-actions"><button id="replacePlan" class="text-button" type="button">更換底圖</button><button id="deletePage" class="text-button danger" type="button">刪除圖面</button></div>
         </div>
         <div class="canvas-surround">
